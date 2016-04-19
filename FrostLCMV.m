@@ -42,8 +42,8 @@ x3 = s1 + s2([end-2*tau_2+1:end, 1:end-2*tau_2]) + s3([end-2*tau_3+1:end, 1:end-
 x4 = s1 + s2([end-3*tau_2+1:end, 1:end-3*tau_2]) + s3([end-3*tau_3+1:end, 1:end-3*tau_3]) + noise_weight * randn(length(s1), 1); 
 
 % Algorithm
-initialize W as F
-sample the input including four delay taps
+% initialize W as F
+% sample the input including four delay taps
 
 
 
