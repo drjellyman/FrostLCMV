@@ -16,17 +16,17 @@ tau = 1; % The time taken for a sound wave to move directly from one sensor to t
 sig_length = 10000; % Note that this is before sampling for observation
 s1 = 0.4 * randn(sig_length,1); % Look direction signal
 bpFilt = designfilt('bandpassfir', 'FilterOrder', 100, ...
-             'CutoffFrequency1', 0.22, 'CutoffFrequency2', 0.28,...
+             'CutoffFrequency1', 0.28, 'CutoffFrequency2', 0.32,...
              'SampleRate', 1);
 s1 = filter(bpFilt,s1);
 s2 = 0.9 * randn(sig_length,1); % Interferer #1
 bpFilt = designfilt('bandpassfir', 'FilterOrder', 100, ...
-             'CutoffFrequency1', 0.1, 'CutoffFrequency2', 0.12,...
+             'CutoffFrequency1', 0.18, 'CutoffFrequency2', 0.22,...
              'SampleRate', 1);
 s2 = filter(bpFilt,s2);
-s3 = 0.5 * randn(sig_length,1); % Interferer #2
+s3 = 0.6 * randn(sig_length,1); % Interferer #2
 bpFilt = designfilt('bandpassfir', 'FilterOrder', 100, ...
-             'CutoffFrequency1', 0.35, 'CutoffFrequency2', 0.4,...
+             'CutoffFrequency1', 0.38, 'CutoffFrequency2', 0.42,...
              'SampleRate', 1);
 s3 = filter(bpFilt,s3);
 
@@ -54,18 +54,37 @@ Y = zeros(sig_length, 1); % The output from the beamformer; i.e. the estimate of
 k = 1; 
 X = [big_X(k+3,1:4), big_X(k+2,1:4), big_X(k+1,1:4), big_X(k,1:4)]';
 Y(k) = W'*X;
-
+OutputPower = zeros(sig_length,1);
+W_norm = zeros(sig_length,1);
 % Iteration
 for k = 2 : sig_length-3
     W = P * (W - mu * Y(k-1) * X) + F; 
     X = [big_X(k+3,1:4), big_X(k+2,1:4), big_X(k+1,1:4), big_X(k,1:4)]';
     Y(k) = W'*X;
+    OutputPower(k) = W'*X*X'*W;
+    W_norm(k) = norm(W);
 end
 
 figure;
 plot(0.2*Y(100:200));
 hold on; 
-plot(s2(100:200));
+plot(s1(100:200));
+
+% Look direction filter response
+figure;
+freqz(F_curly,1)
+
+% Find the optimal weight vector using Rxx, the signal covariance
+% Rxx = % How can I get a 16x16 ??
+
+% Let's check out the output power of the BF
+figure; 
+plot(OutputPower, '.');
+% Hmmm, doesn't appear to be doing any converging. 
+figure; 
+plot(W_norm, '.')
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -76,22 +95,22 @@ FreqDom = [0 : 0.5/(NFFT/2) : 0.5];
 magnitude_f_s1 = abs(f_s1);        % Magnitude of the FFT
 phase_f_s1 = unwrap(angle(f_s1));  % Phase of the FFT
 figure; 
-plot(FreqDom, magnitude_f_s1(NFFT/2:end))
+plot(FreqDom, magnitude_f_s1(1:NFFT/2+1))
 hold on;
 f_s2 = fft(s2,NFFT);
 magnitude_f_s2 = abs(f_s2);        % Magnitude of the FFT
 phase_f_s2 = unwrap(angle(f_s2));  % Phase of the FFT
-plot(FreqDom, magnitude_f_s2(NFFT/2:end)); 
+plot(FreqDom, magnitude_f_s2(1:NFFT/2+1)); 
 hold on;
 f_s3 = fft(s3,NFFT);
 magnitude_f_s3 = abs(f_s3);        % Magnitude of the FFT
 phase_f_s3 = unwrap(angle(f_s3));  % Phase of the FFT
-plot(FreqDom, magnitude_f_s3(NFFT/2:end))
+plot(FreqDom, magnitude_f_s3(1:NFFT/2+1))
 hold on;
 f_Y = fft(Y,NFFT);
 magnitude_f_Y = abs(f_Y);        % Magnitude of the FFT
 phase_f_Y = unwrap(angle(f_Y));  % Phase of the FFT
-plot(FreqDom, magnitude_f_Y(NFFT/2:end))
+plot(FreqDom, magnitude_f_Y(1:NFFT/2+1))
 legend('s1', 's2', 's3', 'Y');
 title('Source power vs frequency');
 xlabel('Frequency');ylabel('Power');
